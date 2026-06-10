@@ -1,0 +1,21 @@
+# Secrets and local environment
+.env
+*.env
+!.env.example
+
+# Private teaching / presentation material — must never land in the public repo.
+# The workshop proposal and presentation source live in a separate private repo.
+2026-03-10 Angebot KI-Workshop v2.0.docx
+*.docx
+teaching/
+presentation/
+
+# Local model and data caches
+hf-cache/
+*.cache/
+qdrant_storage/
+open-webui-data/
+
+# Editor / OS noise
+.DS_Store
+*.swp

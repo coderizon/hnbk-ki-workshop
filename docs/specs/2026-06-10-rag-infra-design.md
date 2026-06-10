@@ -79,18 +79,21 @@ private teaching repo, not here.
   hands-on; participants see RAG work against their own documents.
 - **Non-gated model.** Distribution to participants rules out anything behind a
   Hugging Face license gate or token, so first boot just works.
-- **Chat model: `nvidia/Gemma-4-26B-A4B-NVFP4` (instruction-tuned variant).**
-  Apache-2.0 and ungated (NVIDIA's NVFP4 checkpoint downloads with no token and
-  no license click), NVFP4 for native Blackwell performance, and an MoE with
-  25.2B total / ~3.8B active params so inference stays fast. Chosen over
-  `RedHatAI/Qwen3.6-35B-A3B-NVFP4` because it is a smaller download (~16.5 GB vs
-  ~20 GB, which matters when a room of participants each pull it onto their own
-  Spark), it is multimodal (text/image/video/audio, a free upgrade for a demo and
-  useful for image-bearing documents), and it has NVIDIA's own published
-  checkpoint, technical blog, and vLLM-Docker forum thread behind it. It keeps the
-  NVFP4 max-Blackwell-performance property the user wanted, without any gating
-  worry. The exact ungated instruction-tuned (`-it`) checkpoint is confirmed
-  during validation.
+- **Chat model: `nvidia/NVIDIA-Nemotron-Nano-9B-v2-NVFP4`.** Ungated
+  (gated=False, NVIDIA open model license, no token), NVFP4 for native Blackwell
+  performance, and small (9B) so it loads in minutes. Chosen on 2026-06-10 after
+  the Gemma 4 26B-A4B NVFP4 path failed in execution: it required the special
+  `vllm/vllm-openai:gemma4-cu130` image, took about an hour to download ~16.5 GB,
+  and then died with `Engine core initialization failed` during vLLM init on this
+  host. Nemotron Nano is already validated on this exact Spark (three benchmarker
+  runs), runs on the stock NGC `vllm:25.10-py3` image with no patch, was already
+  cached on the host, and booted and answered a chat request in ~3.5 minutes. It
+  keeps both the NVFP4 property and the non-gated requirement. Caveat: it is a
+  hybrid reasoning model, so raw output includes chain-of-thought; rendering that
+  cleanly in Open WebUI is a polish item, not a blocker.
+  Documented fallbacks: `nvidia/Gemma-4-26B-A4B-NVFP4` (ungated, but engine-init
+  failure on the available image) and `RedHatAI/Qwen3.6-35B-A3B-NVFP4` (the
+  gate-then-Qwen fallback).
 - **Embedding model: `BAAI/bge-m3`.** Open, non-gated, already validated on this
   hardware via the benchmarker.
 - **Two repos.** This public infra repo ships to participants. A separate private
@@ -120,17 +123,12 @@ fixed topology, so a single file is easier to read top to bottom.
 
 ## Open validation tasks (resolve by booting, not by assertion)
 
-1. **Gemma 4 NVFP4 image compatibility and exact checkpoint.** Confirm which
-   pinned public vLLM image runs `nvidia/Gemma-4-26B-A4B-NVFP4`. The stock NGC
-   `vllm:25.10-py3` already ran an NVFP4 model (Nemotron Nano) in the source
-   project, so NVFP4 itself is fine, but the published Gemma 4 Spark benchmark
-   used a recent vLLM (0.19-class), so the Gemma 4 architecture likely needs a
-   newer vLLM. NVIDIA's own "run Gemma-4-NVFP4 in vLLM Docker" forum thread is
-   where that image is being worked out. Fallback: pin a newer public image, or
-   ship a Dockerfile so bring-up stays one command (`docker compose up --build`).
-   This is the main thing standing between the stack and true zero-config; the
-   friction must land on the authors, not the participants. Confirm the exact
-   ungated instruction-tuned (`-it`) NVFP4 checkpoint as part of this task.
+1. **Engine image + model — RESOLVED (2026-06-10).** Gemma 4 26B-A4B NVFP4 failed
+   engine-init on the `vllm/vllm-openai:gemma4-cu130` image after the ~16.5 GB
+   download. Pivoted to `nvidia/NVIDIA-Nemotron-Nano-9B-v2-NVFP4` on the stock NGC
+   `vllm:25.10-py3` image, which booted and answered in ~3.5 minutes with no patch.
+   No special image or Dockerfile is needed, so bring-up stays a plain
+   `docker compose up`.
 2. **GPU memory split.** Two vLLM processes share the one GPU. Start with the chat
    engine at `gpu-memory-utilization` ~0.80 and embedding ~0.10, then confirm both
    come up without OOM on first boot. The source project's memory notes that 0.95
@@ -147,17 +145,20 @@ Research performed today; no prior surface existed in either project.
   Blackwell-native 4-bit path.
 - NVIDIA's own large NVFP4 models (Nemotron Super) are gated; some community NVFP4
   builds with speculative decoding need source-built vLLM plus patches.
-- Gemma 4 (Google, April 2026) ships under Apache-2.0, not the older gated Gemma
-  license. `nvidia/Gemma-4-26B-A4B-NVFP4` is confirmed ungated (no token, no
-  acceptance click) and runs on the DGX Spark via vLLM at ~52 tok/s using
-  ~16.5 GB, leaving ~82 GB for KV cache. It is multimodal (text/image/video/audio).
-- The Qwen3 family (Apache-2.0, `RedHatAI` NVFP4) is an equally non-gated fallback
-  if Gemma 4 hits an image-compatibility wall.
-- Chosen chat model: `nvidia/Gemma-4-26B-A4B-NVFP4` (instruction-tuned).
-- Sources: NVIDIA "Bringing AI Closer to the Edge with Gemma 4" blog (2026);
-  Gemma 4 on DGX Spark NVFP4 benchmark (ai-muninn, 2026);
-  `nvidia/Gemma-4-26B-A4B-NVFP4` HF model card; NVIDIA forum "run Gemma-4-NVFP4 in
-  vLLM Docker"; vLLM DGX Spark blog (2026-06-01).
+- **Chosen chat model: `nvidia/NVIDIA-Nemotron-Nano-9B-v2-NVFP4`** on the stock
+  NGC `vllm:25.10-py3` image. Confirmed ungated (gated=False, NVIDIA open model
+  license) and validated booting on this Spark in ~3.5 minutes from cache.
+- Gemma 4 26B-A4B NVFP4 (`nvidia/Gemma-4-26B-A4B-NVFP4`) is ungated and looked
+  ideal on paper (~16.5 GB, ~52 tok/s, multimodal) but failed engine-init on the
+  `vllm/vllm-openai:gemma4-cu130` image on this host on 2026-06-10. Kept as a
+  fallback to revisit when the vLLM/Gemma-4 NVFP4 path stabilizes.
+- `RedHatAI/Qwen3.6-35B-A3B-NVFP4` (Qwen3, Apache-2.0, ungated) is the secondary
+  fallback and the target of the user's gate-then-Qwen rule.
+- Embedding model `BAAI/bge-m3` is open and validated on this host.
+- Sources: dgx-spark-observables benchmarker (validated Nemotron Nano runs);
+  live boot test 2026-06-10; HF model cards (gating checks); NVIDIA Gemma 4 blog
+  and ai-muninn Spark benchmark (for the Gemma fallback); vLLM DGX Spark blog
+  (2026-06-01).
 
 ## Participant experience (target)
 

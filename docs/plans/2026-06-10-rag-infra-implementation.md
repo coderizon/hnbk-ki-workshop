@@ -1,5 +1,13 @@
 # RAG Infrastructure Showcase Implementation Plan
 
+> **STATUS (2026-06-11): EXECUTED, with one divergence.** The stack is built and
+> running. The chat model is **NOT** Gemma 4 as written below: Gemma 4 26B-A4B
+> NVFP4 failed engine-init during execution, so we pivoted to
+> `nvidia/NVIDIA-Nemotron-Nano-9B-v2-NVFP4` on the stock NGC vLLM image. The
+> sections below still describe the original Gemma plan; for the actual outcome
+> see `docs/specs/2026-06-10-rag-infra-design.md`, `docs/VALIDATION.md`, and
+> `docs/Dependency Intelligence.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a self-contained Docker Compose RAG stack that a workshop participant clones onto their own NVIDIA DGX Spark and brings up with one command.

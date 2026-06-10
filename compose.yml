@@ -1,17 +1,17 @@
 services:
   # ── Chat LLM: Nemotron Nano 9B v2 (NVFP4) on the GPU, OpenAI-compatible API ──
   engine:
-    image: nvcr.io/nvidia/vllm:25.10-py3
+    image: ${ENGINE_IMAGE}
     container_name: engine
     entrypoint: ["vllm", "serve"]
     command: >
-      nvidia/NVIDIA-Nemotron-Nano-9B-v2-NVFP4
+      ${CHAT_MODEL}
       --host 0.0.0.0 --port 8000
-      --gpu-memory-utilization 0.80
-      --max-model-len 32768
-      --max-num-seqs 200
+      --gpu-memory-utilization ${CHAT_GPU_FRACTION}
+      --max-model-len ${MAX_MODEL_LEN}
+      --max-num-seqs ${MAX_NUM_SEQS}
       --trust-remote-code
-    ports: ["8000:8000"]
+    ports: ["${ENGINE_PORT}:8000"]
     restart: unless-stopped
     ipc: host
     shm_size: "16gb"
@@ -35,16 +35,16 @@ services:
 
   # ── Embeddings: BGE-m3 via vLLM pooling mode ────────────────────────────────
   vllm-embedding:
-    image: nvcr.io/nvidia/vllm:25.10-py3
+    image: ${EMBEDDING_IMAGE}
     container_name: vllm-embedding
     entrypoint: ["vllm", "serve"]
     command: >
-      BAAI/bge-m3
+      ${EMBEDDING_MODEL}
       --host 0.0.0.0 --port 8081
       --runner pooling
       --max-model-len 2000
-      --gpu-memory-utilization 0.10
-    ports: ["8081:8081"]
+      --gpu-memory-utilization ${EMBED_GPU_FRACTION}
+    ports: ["${EMBED_PORT}:8081"]
     restart: unless-stopped
     ipc: host
     environment:
@@ -67,25 +67,25 @@ services:
 
   # ── Vector store ────────────────────────────────────────────────────────────
   qdrant:
-    image: qdrant/qdrant
+    image: ${QDRANT_IMAGE}
     container_name: qdrant
-    ports: ["6333:6333", "6334:6334"]
+    ports: ["${QDRANT_PORT}:6333", "${QDRANT_GRPC_PORT}:6334"]
     restart: unless-stopped
     volumes:
       - qdrant_storage:/qdrant/storage
 
   # ── Document text extraction ────────────────────────────────────────────────
   tika:
-    image: apache/tika:latest-full
+    image: ${TIKA_IMAGE}
     container_name: tika
-    ports: ["9998:9998"]
+    ports: ["${TIKA_PORT}:9998"]
     restart: unless-stopped
 
   # ── Chat UI + RAG orchestrator ──────────────────────────────────────────────
   open-webui:
-    image: ghcr.io/open-webui/open-webui:main
+    image: ${OPENWEBUI_IMAGE}
     container_name: open-webui
-    ports: ["3000:8080"]
+    ports: ["${WEBUI_PORT}:8080"]
     restart: unless-stopped
     environment:
       # Chat backend

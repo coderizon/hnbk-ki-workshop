@@ -79,11 +79,18 @@ private teaching repo, not here.
   hands-on; participants see RAG work against their own documents.
 - **Non-gated model.** Distribution to participants rules out anything behind a
   Hugging Face license gate or token, so first boot just works.
-- **Chat model: `RedHatAI/Qwen3.6-35B-A3B-NVFP4`.** Non-gated (Apache-2.0 base),
-  NVFP4 for native Blackwell performance, and an MoE with only ~3B active params
-  so inference stays fast. This is the proven NVFP4 Spark recipe. Selected over a
-  smaller dense FP8 model because the user prioritized maximum Blackwell
-  performance; the cost is the image-compatibility task below.
+- **Chat model: `nvidia/Gemma-4-26B-A4B-NVFP4` (instruction-tuned variant).**
+  Apache-2.0 and ungated (NVIDIA's NVFP4 checkpoint downloads with no token and
+  no license click), NVFP4 for native Blackwell performance, and an MoE with
+  25.2B total / ~3.8B active params so inference stays fast. Chosen over
+  `RedHatAI/Qwen3.6-35B-A3B-NVFP4` because it is a smaller download (~16.5 GB vs
+  ~20 GB, which matters when a room of participants each pull it onto their own
+  Spark), it is multimodal (text/image/video/audio, a free upgrade for a demo and
+  useful for image-bearing documents), and it has NVIDIA's own published
+  checkpoint, technical blog, and vLLM-Docker forum thread behind it. It keeps the
+  NVFP4 max-Blackwell-performance property the user wanted, without any gating
+  worry. The exact ungated instruction-tuned (`-it`) checkpoint is confirmed
+  during validation.
 - **Embedding model: `BAAI/bge-m3`.** Open, non-gated, already validated on this
   hardware via the benchmarker.
 - **Two repos.** This public infra repo ships to participants. A separate private
@@ -113,14 +120,17 @@ fixed topology, so a single file is easier to read top to bottom.
 
 ## Open validation tasks (resolve by booting, not by assertion)
 
-1. **Qwen3.6 NVFP4 image compatibility.** Confirm which pinned public vLLM image
-   runs `RedHatAI/Qwen3.6-35B-A3B-NVFP4`. The stock NGC `vllm:25.10-py3` already
-   ran an NVFP4 model (Nemotron Nano) in the source project, so NVFP4 itself is
-   fine, but the Qwen3.6 architecture may need a newer vLLM. Fallback: pin a newer
-   public image, or ship a Dockerfile so bring-up stays one command
-   (`docker compose up --build`). This is the main thing standing between the
-   stack and true zero-config; the friction must land on the authors, not the
-   participants.
+1. **Gemma 4 NVFP4 image compatibility and exact checkpoint.** Confirm which
+   pinned public vLLM image runs `nvidia/Gemma-4-26B-A4B-NVFP4`. The stock NGC
+   `vllm:25.10-py3` already ran an NVFP4 model (Nemotron Nano) in the source
+   project, so NVFP4 itself is fine, but the published Gemma 4 Spark benchmark
+   used a recent vLLM (0.19-class), so the Gemma 4 architecture likely needs a
+   newer vLLM. NVIDIA's own "run Gemma-4-NVFP4 in vLLM Docker" forum thread is
+   where that image is being worked out. Fallback: pin a newer public image, or
+   ship a Dockerfile so bring-up stays one command (`docker compose up --build`).
+   This is the main thing standing between the stack and true zero-config; the
+   friction must land on the authors, not the participants. Confirm the exact
+   ungated instruction-tuned (`-it`) NVFP4 checkpoint as part of this task.
 2. **GPU memory split.** Two vLLM processes share the one GPU. Start with the chat
    engine at `gpu-memory-utilization` ~0.80 and embedding ~0.10, then confirm both
    come up without OOM on first boot. The source project's memory notes that 0.95
@@ -135,13 +145,19 @@ Research performed today; no prior surface existed in either project.
 
 - vLLM officially supports the DGX Spark (GB10 Blackwell); NVFP4 is the
   Blackwell-native 4-bit path.
-- NVIDIA's own NVFP4 models (Nemotron Super) are gated and large; community NVFP4
-  Qwen builds with speculative decoding need source-built vLLM plus patches.
-- The clean non-gated path is the Qwen3 family (Apache-2.0). `RedHatAI`'s NVFP4
-  Qwen quantization is non-gated and has a published Spark recipe.
-- Sources: vLLM DGX Spark blog (2026-06-01); RedHatAI/Qwen3.6-35B-A3B-NVFP4 vLLM
-  recipe (stevescargall, 2026-04); vLLM Qwen3.6 recipe docs; NVIDIA forum PSA on
-  FP4/NVFP4 support for Spark.
+- NVIDIA's own large NVFP4 models (Nemotron Super) are gated; some community NVFP4
+  builds with speculative decoding need source-built vLLM plus patches.
+- Gemma 4 (Google, April 2026) ships under Apache-2.0, not the older gated Gemma
+  license. `nvidia/Gemma-4-26B-A4B-NVFP4` is confirmed ungated (no token, no
+  acceptance click) and runs on the DGX Spark via vLLM at ~52 tok/s using
+  ~16.5 GB, leaving ~82 GB for KV cache. It is multimodal (text/image/video/audio).
+- The Qwen3 family (Apache-2.0, `RedHatAI` NVFP4) is an equally non-gated fallback
+  if Gemma 4 hits an image-compatibility wall.
+- Chosen chat model: `nvidia/Gemma-4-26B-A4B-NVFP4` (instruction-tuned).
+- Sources: NVIDIA "Bringing AI Closer to the Edge with Gemma 4" blog (2026);
+  Gemma 4 on DGX Spark NVFP4 benchmark (ai-muninn, 2026);
+  `nvidia/Gemma-4-26B-A4B-NVFP4` HF model card; NVIDIA forum "run Gemma-4-NVFP4 in
+  vLLM Docker"; vLLM DGX Spark blog (2026-06-01).
 
 ## Participant experience (target)
 

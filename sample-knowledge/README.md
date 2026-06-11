@@ -1,23 +1,14 @@
-# Beispiel-Wissensbasis
+# Sample Knowledge Base
 
-Ein kleiner Testdatensatz, um die RAG-Wissensdatenbank in Open WebUI auszuprobieren.
-Die Dokumente sind erfunden, aber in sich stimmig: Die Antworten stehen
-ausschließlich in diesen Dateien, sodass man gut erkennt, ob das System wirklich aus
-den Dokumenten antwortet.
+A ready-made test set for the RAG knowledge base, in two languages. Each folder is
+self-contained: four documents on different topics (two Markdown, two PDF) plus a
+question sheet with expected answers.
 
-## Diese vier Dokumente in eine Wissenssammlung hochladen
+- **[`de/`](de/)** — German documents and question sheet (mirrors the school's own
+  use case).
+- **[`en/`](en/)** — English documents and question sheet.
 
-- `it-ordnung.md` — IT-Ordnung der Schule (WLAN, Passwörter, Drucken, Server)
-- `brandschutzordnung.md` — Brandschutz und Evakuierung
-- `produktdatenblatt-packesel-x2.pdf` — technisches Datenblatt eines Lastenrads
-- `exkursion-zeche-hannibal.pdf` — Informationsblatt zu einer Exkursion
-
-Zwei Markdown-Dateien und zwei PDFs, vier verschiedene Themen, damit man sieht, wie
-das Retrieval die richtige Quelle findet.
-
-## Nicht hochladen
-
-- `fragenkatalog.md` — die Fragen zum Ausprobieren samt erwarteter Antworten.
-- `README.md` — diese Datei.
-
-Lade die vier Dokumente hoch und arbeite dann den `fragenkatalog.md` durch.
+Pick one language, upload its four documents into an Open WebUI Knowledge
+collection, and work through that folder's question sheet. The facts are invented
+but internally consistent, so a correct answer proves the model is reading the
+documents rather than its training.

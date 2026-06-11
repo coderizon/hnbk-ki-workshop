@@ -132,11 +132,11 @@ The first account you create becomes the administrator.
 4. Start a chat, attach the Knowledge collection to your message, and ask a
    question about the document. The answer is generated from the retrieved text.
 
-A ready-made test set is in [`sample-knowledge/`](sample-knowledge/): four short
-documents on different topics (two Markdown, two PDF) plus `fragenkatalog.md`, a
-sheet of questions with expected answers for trying the retrieval. The documents
-are in German, mirroring the school's own use case. Upload the four documents into
-a Knowledge collection and work through the question sheet.
+A ready-made test set is in [`sample-knowledge/`](sample-knowledge/), in German
+(`de/`) and English (`en/`): per language, four short documents on different topics
+(two Markdown, two PDF) plus a question sheet with expected answers for trying the
+retrieval. Pick a language, upload its four documents into a Knowledge collection,
+and work through that folder's question sheet.
 
 ## Running on a laptop instead (no DGX Spark)
 

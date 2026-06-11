@@ -1,7 +1,9 @@
 # Secrets and local environment
 .env
+.env.*
 *.env
 !.env.example
+!.env.laptop.example
 
 # Private teaching / presentation material — must never land in the public repo.
 # The workshop proposal and presentation source live in a separate private repo.

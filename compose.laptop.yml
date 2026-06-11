@@ -1,0 +1,94 @@
+# Laptop variant: same RAG stack, but Ollama on CPU instead of vLLM on the GPU.
+# For participants who want to try RAG on their own machine without a DGX Spark.
+#
+# Run:
+#   cp .env.laptop.example .env.laptop
+#   docker compose -f compose.laptop.yml --env-file .env.laptop up -d
+#
+# Ollama serves BOTH the chat model and the embedding model, so this is four
+# services instead of five. No GPU is required; it runs on CPU (slower).
+
+services:
+  # ── Ollama: serves the chat model AND the embedding model ───────────────────
+  ollama:
+    image: ${OLLAMA_IMAGE}
+    container_name: ollama
+    ports: ["${OLLAMA_PORT}:11434"]
+    restart: unless-stopped
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  # ── One-shot: pull the chat + embedding models into Ollama, then exit ───────
+  ollama-models:
+    image: ${OLLAMA_IMAGE}
+    container_name: ollama-models
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - "ollama pull ${CHAT_MODEL} && ollama pull ${EMBEDDING_MODEL} && echo 'models ready'"
+    restart: "no"
+
+  # ── Vector store ────────────────────────────────────────────────────────────
+  qdrant:
+    image: ${QDRANT_IMAGE}
+    container_name: qdrant
+    ports: ["${QDRANT_PORT}:6333", "${QDRANT_GRPC_PORT}:6334"]
+    restart: unless-stopped
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+  # ── Document text extraction ────────────────────────────────────────────────
+  tika:
+    image: ${TIKA_IMAGE}
+    container_name: tika
+    ports: ["${TIKA_PORT}:9998"]
+    restart: unless-stopped
+
+  # ── Chat UI + RAG orchestrator (wired to Ollama) ────────────────────────────
+  open-webui:
+    image: ${OPENWEBUI_IMAGE}
+    container_name: open-webui
+    ports: ["${WEBUI_PORT}:8080"]
+    restart: unless-stopped
+    environment:
+      # Chat backend: Ollama (OpenAI path disabled)
+      ENABLE_OLLAMA_API: "true"
+      OLLAMA_BASE_URL: http://ollama:11434
+      ENABLE_OPENAI_API: "false"
+      # Vector store
+      VECTOR_DB: qdrant
+      QDRANT_URI: http://qdrant:6333
+      # Embeddings via Ollama
+      RAG_EMBEDDING_ENGINE: ollama
+      RAG_EMBEDDING_MODEL: ${EMBEDDING_MODEL}
+      RAG_OLLAMA_BASE_URL: http://ollama:11434
+      # Document extraction via Tika
+      CONTENT_EXTRACTION_ENGINE: tika
+      TIKA_SERVER_URL: http://tika:9998
+      ENABLE_WEB_LOADER_SSL_VERIFICATION: "false"
+    volumes:
+      - open-webui-data:/app/backend/data
+    depends_on:
+      ollama:
+        condition: service_healthy
+      ollama-models:
+        condition: service_completed_successfully
+      qdrant:
+        condition: service_started
+      tika:
+        condition: service_started
+
+volumes:
+  ollama-data:
+  qdrant_storage:
+  open-webui-data:

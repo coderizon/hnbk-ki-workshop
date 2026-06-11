@@ -132,6 +132,36 @@ The first account you create becomes the administrator.
 4. Start a chat, attach the Knowledge collection to your message, and ask a
    question about the document. The answer is generated from the retrieved text.
 
+## Running on a laptop instead (no DGX Spark)
+
+If you don't have a DGX Spark, there's a second compose file that runs the same
+RAG stack on a normal laptop using [Ollama](https://ollama.com) on the CPU instead
+of vLLM on the GPU. Ollama serves both the chat model and the embeddings, so it's
+four services instead of five, and no GPU is required.
+
+It fits a machine with about 16 GB of RAM. The chat model is `gemma4:e4b-it-qat`
+(Gemma 4 E4B, 4-bit, ~6 GB); embeddings stay on `bge-m3`.
+
+```bash
+cp .env.laptop.example .env.laptop
+docker compose -f compose.laptop.yml --env-file .env.laptop up -d
+docker compose -f compose.laptop.yml ps    # wait until services are up
+# first start pulls Gemma 4 E4B (~6 GB) and bge-m3 into Ollama
+# then open http://localhost:3000
+```
+
+From there the usage is identical to the steps in **First use** above. Two things
+to expect:
+
+- On CPU this is noticeably slower than the Spark, a handful of tokens per second.
+  Fine for learning and experimenting, not for a snappy demo.
+- On a Mac, Docker cannot use the Apple GPU (Metal), so it runs CPU-only inside the
+  container. For more speed, Mac users can install Ollama natively and point Open
+  WebUI at it instead.
+
+Gemma 4 E4B is a normal instruct model, so unlike the Spark's Nemotron it does not
+show a separate "thinking" step.
+
 ## A note on the model's "thinking"
 
 Nemotron Nano is a reasoning model: by default it works through a problem step by

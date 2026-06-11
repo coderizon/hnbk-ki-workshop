@@ -87,6 +87,30 @@ parsers available:**
   opening tag sits in the prompt); or (b) a future vLLM image that ships a Nemotron
   reasoning parser. Treat clean folding as an open item, not a solved one.
 
+## Laptop variant (Ollama on CPU)
+
+A second compose file, `compose.laptop.yml`, runs the same RAG stack on a laptop
+without a GPU, for participants who don't have a Spark. Ollama replaces both vLLM
+services (it serves the chat model and the embedding model), so it's four services
+instead of five.
+
+- **Runtime:** `ollama/ollama` pinned by digest (version 0.30.7 at pin time).
+- **Chat model:** `gemma4:e4b-it-qat` — Gemma 4 E4B, 4-bit QAT, instruction-tuned,
+  ~6.1 GB. Chosen over the default `gemma4:e4b` (9.6 GB) because the QAT build plus
+  bge-m3, Qdrant, Tika, and Open WebUI fits a 16 GB-RAM laptop with headroom; the
+  9.6 GB default would crowd it. `gemma4:e2b` (7.2 GB) is a lighter alternative,
+  plain `gemma4:e4b` for machines with more RAM. (Sizes from the Ollama library;
+  confirm the tag still exists before relying on it.)
+- **Embedding:** `bge-m3` on Ollama (~1.2 GB), same model as the Spark variant so
+  the vector space matches.
+- **Open WebUI wiring:** `ENABLE_OLLAMA_API=true`, `OLLAMA_BASE_URL`,
+  `RAG_EMBEDDING_ENGINE=ollama`, `RAG_OLLAMA_BASE_URL`; the OpenAI path is disabled.
+- **Caveats:** CPU inference is slow (a few tokens/sec). Ollama inside Docker on a
+  Mac is CPU-only (no Metal passthrough); Mac users wanting speed run Ollama
+  natively. Gemma 4 E4B is a plain instruct model, so no reasoning/thinking step.
+- **Model pull:** a one-shot `ollama-models` service pulls both models on first
+  start; Open WebUI waits for it via `service_completed_successfully`.
+
 ## Currency notes
 
 - vLLM officially supports the DGX Spark; NVFP4 is the Blackwell-native 4-bit path.

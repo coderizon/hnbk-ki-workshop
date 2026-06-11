@@ -26,14 +26,19 @@ The `.gitignore` here already blocks `*.docx` and `teaching/` as a safety net.
   confirmed to co-exist without out-of-memory. Note: the GB10 uses unified memory,
   so `nvidia-smi` reports memory as `N/A`; judge OOM from vLLM's own logs, not
   from `nvidia-smi`.
-- **One compose file, one fixed topology.** Keep it readable top to bottom; do not
-  reintroduce the swappable-engine plugin layout from the `dgx-spark-observables`
-  benchmarker that this was extracted from.
+- **Two compose files, each one fixed topology.** `compose.yml` is the DGX Spark
+  variant (vLLM on the GPU); `compose.laptop.yml` is the laptop variant (Ollama on
+  CPU). Keep each readable top to bottom; do not reintroduce the swappable-engine
+  plugin layout from the `dgx-spark-observables` benchmarker that this was
+  extracted from. A change to the shared services (Qdrant, Tika, Open WebUI) usually
+  needs applying to both files.
 
 ## Where things live
 
-- `compose.yml` — the five-service stack.
-- `.env.example` — pinned images, model ids, GPU fractions, ports.
+- `compose.yml` — the five-service DGX Spark stack (vLLM/GPU).
+- `compose.laptop.yml` — the four-service laptop stack (Ollama/CPU).
+- `.env.example` / `.env.laptop.example` — pinned images, model ids, GPU
+  fractions, ports for each variant.
 - `docs/specs/` — the design spec, including the decision history (notably the
   pivot from Gemma 4 to Nemotron Nano; read it before changing the chat model).
 - `docs/plans/` — the implementation plan.

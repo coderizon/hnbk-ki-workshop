@@ -25,6 +25,70 @@ uploaded document, chunks the text, calls the embedding service, stores the
 vectors in Qdrant, and at question time retrieves the relevant chunks and feeds
 them to the chat model.
 
+## How it works
+
+The topology below shows the five services and how they connect on the Docker
+network. You only ever touch Open WebUI in the browser; the rest is internal.
+
+```mermaid
+flowchart LR
+  user([You / Browser])
+  subgraph spark["DGX Spark (one machine, Docker)"]
+    webui["Open WebUI\n:3000\n(chat UI + RAG orchestrator)"]
+    engine["vLLM engine\nNemotron Nano 9B v2 NVFP4\n:8000"]
+    embed["vLLM embedding\nBGE-m3\n:8081"]
+    tika["Apache Tika\n:9998"]
+    qdrant[("Qdrant\nvector store\n:6333")]
+    gpu{{"GB10 GPU\n(unified memory)"}}
+  end
+
+  user -->|HTTPS browser| webui
+  webui -->|chat /v1| engine
+  webui -->|embed /v1| embed
+  webui -->|extract text| tika
+  webui -->|store / search vectors| qdrant
+  engine -. shares .-> gpu
+  embed -. shares .-> gpu
+```
+
+When you upload a document, Open WebUI runs this ingest flow once:
+
+```mermaid
+sequenceDiagram
+  participant U as Browser
+  participant W as Open WebUI
+  participant T as Tika
+  participant E as Embedding (BGE-m3)
+  participant Q as Qdrant
+  U->>W: Upload document (PDF / DOCX / MD)
+  W->>T: Send file for extraction
+  T-->>W: Plain text
+  W->>W: Split text into chunks
+  W->>E: Embed each chunk
+  E-->>W: Vectors
+  W->>Q: Store vectors + chunk text
+  Q-->>W: Stored
+```
+
+When you ask a question with a knowledge collection attached, it runs this:
+
+```mermaid
+sequenceDiagram
+  participant U as Browser
+  participant W as Open WebUI
+  participant E as Embedding (BGE-m3)
+  participant Q as Qdrant
+  participant L as Engine (Nemotron)
+  U->>W: Ask a question (knowledge collection attached)
+  W->>E: Embed the question
+  E-->>W: Query vector
+  W->>Q: Search for the most similar chunks
+  Q-->>W: Top-k relevant chunks
+  W->>L: Question + retrieved chunks as context
+  L-->>W: Grounded answer
+  W-->>U: Answer with sources
+```
+
 ## Prerequisites
 
 - An NVIDIA DGX Spark (GB10) with the GPU available to Docker.

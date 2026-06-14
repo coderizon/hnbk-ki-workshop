@@ -22,6 +22,13 @@ open-webui-data/
 # Local session handoff (team-internal, not part of the public deliverable)
 HANDOFF.md
 
+# Design contracts: the durable record (spec.md + plan.md) under
+# contracts/<date-slug>/ is tracked as the public design record. The
+# handoff/session scaffolding under handoff-trees/ is team-internal working
+# state — same category as the root HANDOFF.md above — and stays local, not part
+# of the public deliverable.
+contracts/*/handoff-trees/
+
 # Editor / OS noise
 .DS_Store
 *.swp

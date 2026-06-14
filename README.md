@@ -224,8 +224,13 @@ and re-test.
 
 ## Project documentation
 
-- `docs/specs/` — the design spec (what this is and why it was built this way).
-- `docs/plans/` — the implementation plan.
+- `contracts/<date-slug>/` — design contracts for changes going forward: a dated
+  folder per change with a `spec.md` (the design) and a `plan.md` (the
+  implementation plan). This is the canonical home for new design records.
+- `docs/specs/` and `docs/plans/` — the original RAG-infra design spec and
+  implementation plan (what this is and why it was first built this way); kept as
+  the foundational/historical record. New design records live under
+  `contracts/<date-slug>/` above, not here.
 - `docs/Dependency Intelligence.md` — pinned versions, model choices, and the
   current state of the vLLM / DGX Spark / model dependencies.
 - `AGENTS.md` — guidance for anyone (human or AI) working on this repo.

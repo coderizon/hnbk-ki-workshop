@@ -42,9 +42,20 @@ The `.gitignore` here already blocks `*.docx` and `teaching/` as a safety net.
   GPU (documented but not yet validated on real laptop-GPU hardware).
 - `.env.example` / `.env.laptop.example` / `.env.laptop-gpu.example` — pinned images,
   model ids, GPU fractions, ports for each variant.
-- `docs/specs/` — the design spec, including the decision history (notably the
-  pivot from Gemma 4 to Nemotron Nano; read it before changing the chat model).
-- `docs/plans/` — the implementation plan.
+- `contracts/<date-slug>/` — **the home for design contracts going forward.** Each
+  change of substance gets its own dated folder with a `spec.md` (the design) and a
+  `plan.md` (the implementation plan); these are tracked and are the public design
+  record for that change. Example: `contracts/2026-06-14/` (the laptop-GPU variant).
+  Each contract may also carry a `handoff-trees/` subfolder, but that is local
+  session/working scaffolding (progress trackers, iteration notes, backlogs) and is
+  **gitignored** — same rule as the root `HANDOFF.md`. Track the contract; not the
+  handoff tree.
+- `docs/specs/` and `docs/plans/` — the original, foundational RAG-infra design
+  records (`2026-06-10-rag-infra-design.md` and its implementation plan), including
+  the decision history (notably the pivot from Gemma 4 to Nemotron Nano; read the
+  spec before changing the chat model). These are kept as the historical record of
+  how the stack was first built; **new** design contracts go under
+  `contracts/<date-slug>/` (above), not here.
 - `docs/Dependency Intelligence.md` — current state of the vLLM / DGX Spark /
   model dependencies, with pinned versions and the freshness rule. Consult it
   before any version-sensitive change.

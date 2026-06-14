@@ -140,7 +140,7 @@ and work through that folder's question sheet.
 
 ## Running on a laptop instead (no DGX Spark)
 
-If you don't have a DGX Spark, there's a second compose file that runs the same
+If you don't have a DGX Spark, there's also a compose file that runs the same
 RAG stack on a normal laptop using [Ollama](https://ollama.com) on the CPU instead
 of vLLM on the GPU. Ollama serves both the chat model and the embeddings, so it's
 four services instead of five, and no GPU is required.
@@ -167,6 +167,24 @@ to expect:
 
 Gemma 4 E4B is a normal instruct model, so unlike the Spark's Nemotron it does not
 show a separate "thinking" step.
+
+### Faster on a laptop with an NVIDIA GPU
+
+If your laptop has a discrete NVIDIA GPU and the NVIDIA Container Toolkit installed
+(the same prerequisite as the DGX Spark variant), there is a third compose file that
+runs the same four-service Ollama stack with the GPU instead of the CPU:
+
+```bash
+cp .env.laptop-gpu.example .env.laptop-gpu
+docker compose -f compose.laptop-gpu.yml --env-file .env.laptop-gpu up -d
+docker compose -f compose.laptop-gpu.yml ps
+# first start pulls Gemma 4 E4B (~6 GB) and bge-m3 into Ollama
+# then open http://localhost:3000
+```
+
+This is faster than the CPU laptop variant but is still a learning setup, not a
+Spark. Note: this variant ships documented but not yet validated on real laptop-GPU
+hardware — if you boot it, the team would welcome a validation report.
 
 ## A note on the model's "thinking"
 

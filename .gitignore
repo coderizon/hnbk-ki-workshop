@@ -4,6 +4,7 @@
 *.env
 !.env.example
 !.env.laptop.example
+!.env.laptop-gpu.example
 
 # Private teaching / presentation material — must never land in the public repo.
 # The workshop proposal and presentation source live in a separate private repo.
